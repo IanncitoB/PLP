@@ -165,7 +165,61 @@ foldNat f z n = f (foldNat f z (n-1)) n
 
 -- Ej 10.2
 -- Consultar
+{- 
 potencia :: Integer -> Integer -> Integer
 potencia z 0 = z
 potencia z n = (*) (potencia z (n-1)) 
 potencia _ y = foldNat (\acc rec -> rec*rec) 1 y
+-}
+
+
+-- Ej 11
+data Polinomio a =    X
+                    | Cte a
+                    | Suma (Polinomio a) (Polinomio a)
+                    | Prod (Polinomio a) (Polinomio a)
+
+foldPolinomio :: b -> (a -> b) -> (b -> b -> b) -> (b -> b -> b) -> Polinomio a -> b
+foldPolinomio cX cCte cSuma cProd p = case p of
+                                        X            -> cX
+                                        Cte c        -> cCte c
+                                        Suma izq der -> cSuma (rec izq) (rec der)
+                                        Prod izq der -> cProd (rec izq) (rec der)
+                                        where rec = foldPolinomio cX cCte cSuma cProd
+
+evaluarPolinomio :: Num a => a -> Polinomio a -> a
+evaluarPolinomio n = foldPolinomio n id (+) (*)
+
+-- Ej 12
+
+data AB a = Nil | Bin (AB a) a (AB a)
+
+foldAB :: b -> (a -> b -> b -> b) -> AB a -> b
+foldAB cNil cBin ab = case ab of
+                        Nil             -> cNil
+                        Bin izq v der   -> cBin v (rec izq) (rec der)
+                        where rec = foldAB cNil cBin
+
+recAB :: b -> (a -> b -> b -> AB a -> AB a -> b) -> AB a -> b
+recAB cNil cBin ab = case ab of
+                        Nil             -> cNil
+                        Bin izq v der   -> cBin v (rec izq) (rec der) izq der
+                        where rec = recAB cNil cBin
+
+-- Ej 12.2
+esNil :: AB a -> Bool
+esNil ab = case ab of
+                Nil         -> True
+                Bin _ _ _   -> False
+
+altura :: AB a -> Int
+altura = foldAB 0 (\_ izq der -> 1 + (max izq der))
+
+cantNodos :: AB a -> Int
+cantNodos = foldAB 0 (\_ izq der -> 1 + izq + der)
+
+-- Ej 12.3
+
+mejorSegunAB :: (a -> a -> Bool) -> AB a -> a
+mejorSegunAB _ Nil = undefined
+
